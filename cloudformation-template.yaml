@@ -376,7 +376,10 @@ Resources:
                   "leave_on_terminate": true,
                   "retry_join": [
                     "provider=aws tag_key=StackName tag_value=${AWS::StackName} region=${AWS::Region}"
-                  ]
+                  ],
+                  "telemetry": {
+                    "statsd_address": "ec2_host:9125"
+                  }
                 }
               permissions: '0644'
             - path: /etc/cron.d/consul-backup
@@ -392,6 +395,286 @@ Resources:
                 aws s3 cp /opt/consul-backinator/acls s3://${BackupStorageBucketName}/automatic/ec2_host/acls/$BACKUP_DATE/acls-backup
                 aws s3 cp /opt/consul-backinator/acls.sig s3://${BackupStorageBucketName}/automatic/ec2_host/acls/$BACKUP_DATE/acls-backup.sig
               permissions: '0775'
+            - path: /opt/statsd-exporter.consul.yaml
+              content: |
+                mappings:
+                - match: consul.*.runtime.*
+                  name: consul_runtime
+                  labels:
+                    host: ec2_host
+                    type: $2
+                - match: consul.runtime.total_gc_pause_ns
+                  name: consul_runtime_total_gc_pause_ns
+                  labels:
+                    host: ec2_host
+                    type: $2
+                - match: consul.consul.health.service.query-tag.*.*.*
+                  name: consul_health_service_query_tag
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3
+                - match: consul.consul.health.service.query-tag.*.*.*.*
+                  name: consul_health_service_query_tag
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3.$4
+                - match: consul.consul.health.service.query-tag.*.*.*.*.*
+                  name: consul_health_service_query_tag
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3.$4.$5
+                - match: consul.consul.health.service.query-tag.*.*.*.*.*.*
+                  name: consul_health_service_query_tag
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3.$4.$5.$6
+                - match: consul.consul.health.service.query-tag.*.*.*.*.*.*.*
+                  name: consul_health_service_query_tag
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3.$4.$5.$6.$7
+                - match: consul.consul.health.service.query-tag.*.*.*.*.*.*.*.*
+                  name: consul_health_service_query_tag
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3.$4.$5.$6.$7.$8
+                - match: consul.consul.health.service.query-tag.*.*.*.*.*.*.*.*.*
+                  name: consul_health_service_query_tag
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3.$4.$5.$6.$7.$8.$9
+                - match: consul.consul.health.service.query-tag.*.*.*.*.*.*.*.*.*.*
+                  name: consul_health_service_query_tag
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3.$4.$5.$6.$7.$8.$9.$10
+                - match: consul.consul.health.service.query-tag.*.*.*.*.*.*.*.*.*.*.*
+                  name: consul_health_service_query_tag
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3.$4.$5.$6.$7.$8.$9.$10.$11
+                - match: consul.consul.health.service.query-tag.*.*.*.*.*.*.*.*.*.*.*.*
+                  name: consul_health_service_query_tag
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3.$4.$5.$6.$7.$8.$9.$10.$11.$12
+                - match: consul.consul.fsm.persist
+                  name: consul_fsm_persist
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.catalog.deregister
+                  name: consul_catalog_deregister
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.PUT.v1.agent.service_register
+                  name: consul_http_PUT_v1_agent_service_register
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.kv.*
+                  name: consul_http_GET_v1_kv
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.internal.ui.nodes
+                  name: consul_http_GET_v1_internal_ui_nodes
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.internal.ui.node.*
+                  name: consul_http_GET_v1_internal_ui_node
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.health.service.*
+                  name: consul_http_GET_v1_health_service
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.catalog.datacenters
+                  name: consul_http_GET_v1_catalog_datacenters
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.acl.list
+                  name: consul_http_GET_v1_acl_list
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.dns.domain_query.*.*.*.*.*
+                  name: consul_dns_domain_query
+                  labels:
+                    host: ec2_host
+                    query: $1.$2.$3.$4.$5
+                - match: consul.consul.health.service.not-found.*
+                  name: consul_health_service_not_found
+                  labels:
+                    host: ec2_host
+                    query: $1
+                - match: consul.consul.health.service.query.*
+                  name: consul_health_service_query
+                  labels:
+                    host: ec2_host
+                    query: $1
+                - match: consul.*.memberlist.health.score
+                  name: consul_memberlist_health_score
+                  labels:
+                    host: ec2_host
+                - match: consul.serf.queue.*
+                  name: consul_serf_events
+                  labels:
+                    host: ec2_host
+                    type: $1
+                - match: consul.serf.snapshot.appendLine
+                  name: consul_serf_snapshot_appendLine
+                  labels:
+                    host: ec2_host
+                    type: $1
+                - match: consul.serf.coordinate.adjustment-ms
+                  name: consul_serf_coordinate_adjustment_ms
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.rpc.query
+                  name: consul_rpc_query
+                  labels:
+                    host: ec2_host
+                - match: consul.*.consul.session_ttl.active
+                  name: consul_session_ttl_active
+                  labels:
+                    host: ec2_host
+                - match: consul.raft.rpc.*
+                  name: consul_raft_rpc
+                  labels:
+                    host: ec2_host
+                    type: $1
+                - match: consul.raft.rpc.appendEntries.storeLogs
+                  name: consul_raft_rpc_appendEntries_storeLogs
+                  labels:
+                    host: ec2_host
+                    type: $1
+                - match: consul.raft.fsm.apply
+                  name: consul_raft_fsm_apply
+                  labels:
+                    host: ec2_host
+                - match: consul.raft.leader.lastContact
+                  name: consul_raft_leader_lastcontact
+                  labels:
+                    host: ec2_host
+                - match: consul.raft.leader.dispatchLog
+                  name: consul_raft_leader_dispatchLog
+                  labels:
+                    host: ec2_host
+                - match: consul.raft.commitTime
+                  name: consul_raft_commitTime
+                  labels:
+                    host: ec2_host
+                - match: consul.raft.replication.appendEntries.logs.*.*.*.*
+                  name: consul_raft_replication_appendEntries_logs
+                  labels:
+                    host: ec2_host
+                    query: ${1}.${2}.${3}.${4}
+                - match: consul.raft.replication.appendEntries.rpc.*.*.*.*
+                  name: consul_raft_replication_appendEntries_rpc
+                  labels:
+                    host: ec2_host
+                    query: ${1}.${2}.${3}.${4}
+                - match: consul.raft.replication.heartbeat.*.*.*.*
+                  name: consul_raft_replication_heartbeat
+                  labels:
+                    host: ec2_host
+                    query: ${1}.${2}.${3}.${4}
+                - match: consul.consul.rpc.request
+                  name: consul_rpc_requests
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.rpc.accept_conn
+                  name: consul_rpc_accept_conn
+                  labels:
+                    host: ec2_host
+                - match: consul.memberlist.udp.*
+                  name: consul_memberlist_udp
+                  labels:
+                    host: ec2_host
+                    type: $1
+                - match: consul.memberlist.tcp.*
+                  name: consul_memberlist_tcp
+                  labels:
+                    host: ec2_host
+                    type: $1
+                - match: consul.memberlist.gossip
+                  name: consul_memberlist_gossep
+                  labels:
+                    host: ec2_host
+                - match: consul.memberlist.probeNode
+                  name: consul_memberlist_probenode
+                  labels:
+                    host: ec2_host
+                - match: consul.memberlist.pushPullNode
+                  name: consul_memberlist_pushpullnode
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.catalog.datacenters
+                  name: consul_http_GET_catalog_datacenters
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.coordinate.nodes
+                  name: consul_http_GET_coordinate_nodes
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.health.service.*
+                  name: consul_http_GET_health_service
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.internal.ui.nodes.*
+                  name: consul_http_GET_internal_ui_nodes
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.internal.ui.services
+                  name: consul_http_GET_internal_ui_services
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.session.node.*
+                  name: consul_http_GET_session_node
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.http.GET.v1.kv.*.*.*
+                  name: consul_http_GET_kv
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.leader.barrier
+                  name: consul_leader_barrier
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.leader.reconcileMember
+                  name: consul_leader_reconcileMember
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.leader.reconcile
+                  name: consul_leader_reconcile
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.fsm.coordinate.batch-update
+                  name: consul_fsm_coordinate_batch_update
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.fsm.register
+                  name: consul_fsm_register
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.fsm.deregister
+                  name: consul_fsm_deregister
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.catalog.register
+                  name: consul_catalog_register
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.catalog.deregister
+                  name: consul_catalog_deregister
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.fsm.tombstone.reap
+                  name: consul_fsm_tombstone_reap
+                  labels:
+                    host: ec2_host
+                - match: consul.consul.leader.reapTombstones
+                  name: consul_leader_reapTombstones
+                  labels:
+                    host: ec2_host
+              permissions: '0644'
             runcmd:
             - mkdir -p /opt/consul-data
             - curl -O https://releases.hashicorp.com/consul/${ConsulVersion}/consul_${ConsulVersion}_linux_amd64.zip
@@ -400,12 +683,24 @@ Resources:
             - mv consul /usr/local/bin
             - chmod +x /usr/local/bin/consul
             - ip=$(wget -T10 -t2 -qO - http://169.254.169.254/latest/meta-data/local-ipv4 || hostname -i) && sed -i "s/ec2_host/$ip/" /opt/consul-backup.sh
+            - ip=$(wget -T10 -t2 -qO - http://169.254.169.254/latest/meta-data/local-ipv4 || hostname -i) && sed -i "s/ec2_host/$ip/" /opt/consul-config.json
             - mkdir -p /opt/consul-backinator
             - wget https://github.com/myENA/consul-backinator/releases/download/v1.6.5/consul-backinator-1.6.5-amd64-linux.tar.gz
             - tar -xzf consul-backinator-1.6.5-amd64-linux.tar.gz
             - rm -f consul-backinator-1.6.5-amd64-linux.tar.gz
             - mv consul-backinator-1.6.5-amd64-linux/consul-backinator-1.6.5 /usr/local/bin/consul-backinator
             - chmod +x /usr/local/bin/consul-backinator
+            - wget https://github.com/prometheus/node_exporter/releases/download/v0.16.0/node_exporter-0.16.0.linux-amd64.tar.gz
+            - tar xvf node_exporter-0.16.0.linux-amd64.tar.gz
+            - cp node_exporter-0.16.0.linux-amd64/node_exporter /usr/local/bin
+            - chmod +x /usr/local/bin/node_exporter
+            - /usr/local/bin/node_exporter &
+            - wget https://github.com/prometheus/statsd_exporter/releases/download/v0.8.0/statsd_exporter-0.8.0.linux-amd64.tar.gz
+            - tar xvf statsd_exporter-0.8.0.linux-amd64.tar.gz
+            - mv statsd_exporter-0.8.0.linux-amd64/statsd_exporter /usr/local/bin/statsd_exporter
+            - chmod +x /usr/local/bin/statsd_exporter
+            - ip=$(wget -T10 -t2 -qO - http://169.254.169.254/latest/meta-data/local-ipv4 || hostname -i) && sed -i "s/ec2_host/$ip/" /opt/statsd-exporter.consul.yaml
+            - /usr/local/bin/statsd_exporter --statsd.mapping-config=/opt/statsd-exporter.consul.yaml &
             - ip=$(wget -T10 -t2 -qO - http://169.254.169.254/latest/meta-data/local-ipv4 || hostname -i) && consul agent -config-file /opt/consul-config.json -node $ip -advertise $ip -server -bootstrap-expect 3 -ui
 
   CpuUtilizationTargetTracking:
