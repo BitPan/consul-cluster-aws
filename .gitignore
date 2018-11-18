@@ -1,2 +1,8 @@
 
 backup/
+
+\.DS_Store
+
+tutorial-backup\.sh
+
+tutorial-restore\.sh
