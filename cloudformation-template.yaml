@@ -366,7 +366,7 @@ Resources:
             - path: /opt/consul-config.json
               content: |
                 {
-                  "acl_datacenter": "env_environment01-consul",
+                  "primary_datacenter": "${Environment}01-consul",
                   "acl_default_policy": "deny",
                   "acl_enforce_version_8": false,
                   "acl_master_token": "${ConsulToken}",
@@ -379,7 +379,7 @@ Resources:
                   ]
                 }
               permissions: '0644'
-            - path: /etc/cron.d/da-monitoring
+            - path: /etc/cron.d/consul-backup
               content: |
                 0 * * * * root /opt/consul-backup.sh
               permissions: '0600'
@@ -400,13 +400,13 @@ Resources:
             - mv consul /usr/local/bin
             - chmod +x /usr/local/bin/consul
             - ip=$(wget -T10 -t2 -qO - http://169.254.169.254/latest/meta-data/local-ipv4 || hostname -i) && sed -i "s/ec2_host/$ip/" /opt/consul-backup.sh
-            - ip=$(wget -T10 -t2 -qO - http://169.254.169.254/latest/meta-data/local-ipv4 || hostname -i) && consul agent -config-file /opt/consul-config.json -node $ip -advertise $ip -server -bootstrap-expect 3 -ui
             - mkdir -p /opt/consul-backinator
             - wget https://github.com/myENA/consul-backinator/releases/download/v1.6.5/consul-backinator-1.6.5-amd64-linux.tar.gz
             - tar -xzf consul-backinator-1.6.5-amd64-linux.tar.gz
             - rm -f consul-backinator-1.6.5-amd64-linux.tar.gz
             - mv consul-backinator-1.6.5-amd64-linux/consul-backinator-1.6.5 /usr/local/bin/consul-backinator
             - chmod +x /usr/local/bin/consul-backinator
+            - ip=$(wget -T10 -t2 -qO - http://169.254.169.254/latest/meta-data/local-ipv4 || hostname -i) && consul agent -config-file /opt/consul-config.json -node $ip -advertise $ip -server -bootstrap-expect 3 -ui
 
   CpuUtilizationTargetTracking:
     Type: AWS::AutoScaling::ScalingPolicy
