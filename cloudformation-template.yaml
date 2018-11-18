@@ -366,7 +366,7 @@ Resources:
             - path: /opt/consul-config.json
               content: |
                 {
-                  "primary_datacenter": "${Environment}01-consul",
+                  "acl_datacenter": "${Environment}01-consul",
                   "acl_default_policy": "deny",
                   "acl_enforce_version_8": false,
                   "acl_master_token": "${ConsulToken}",
