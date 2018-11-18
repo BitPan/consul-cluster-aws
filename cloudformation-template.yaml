@@ -565,17 +565,17 @@ Resources:
                   name: consul_raft_replication_appendEntries_logs
                   labels:
                     host: ec2_host
-                    query: ${1}.${2}.${3}.${4}
+                    query: $1.$2.$3.$4
                 - match: consul.raft.replication.appendEntries.rpc.*.*.*.*
                   name: consul_raft_replication_appendEntries_rpc
                   labels:
                     host: ec2_host
-                    query: ${1}.${2}.${3}.${4}
+                    query: $1.$2.$3.$4
                 - match: consul.raft.replication.heartbeat.*.*.*.*
                   name: consul_raft_replication_heartbeat
                   labels:
                     host: ec2_host
-                    query: ${1}.${2}.${3}.${4}
+                    query: $1.$2.$3.$4
                 - match: consul.consul.rpc.request
                   name: consul_rpc_requests
                   labels:
