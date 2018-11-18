@@ -6,3 +6,5 @@ backup/
 tutorial-backup\.sh
 
 tutorial-restore\.sh
+
+tutorial-anonymous-policy\.hcl
