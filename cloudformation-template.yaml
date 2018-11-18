@@ -28,6 +28,7 @@ Metadata:
           - DnsName
           - UseSsl
           - CertificateArn
+          - BackupStorageBucketName
 
     ParameterLabels:
       Ami:
@@ -60,6 +61,8 @@ Metadata:
         default: Whether to use SSL when connecting via load balancer
       CertificateArn:
         default: The Certificate ARN to use when UseSsl is set to "true"
+      BackupStorageBucketName:
+        default: The S3 bucket in which to store Consul backups
       
 Parameters:
   Ami:
@@ -112,6 +115,9 @@ Parameters:
     Default: true
   CertificateArn:
     Type: String
+  BackupStorageBucketName:
+    Type: String
+    Default: netbears-consul-backup
   InstanceType:
     Type: String
     AllowedValues:
@@ -226,6 +232,14 @@ Resources:
             - iam:ListInstanceProfiles
             - iam:PutUserPolicy
             Resource: "*"
+      - PolicyName:
+          Fn::Sub: ${AWS::StackName}-s3
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:*
+            Resource: "*"
 
   HostProfile:
     Type: AWS::IAM::InstanceProfile
@@ -249,6 +263,13 @@ Resources:
         FromPort: 0
         ToPort: 65535
         CidrIp: 0.0.0.0/0
+
+  BackupStorage:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName:
+        Ref: BackupStorageBucketName
 
   ASG:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -348,15 +369,29 @@ Resources:
                   "acl_datacenter": "env_environment01-consul",
                   "acl_default_policy": "deny",
                   "acl_enforce_version_8": false,
-                  "acl_master_token": "env_token",
+                  "acl_master_token": "${ConsulToken}",
                   "client_addr": "0.0.0.0",
                   "data_dir": "/opt/consul-data",
-                  "datacenter": "env_environment01-consul",
+                  "datacenter": "${Environment}01-consul",
                   "leave_on_terminate": true,
                   "retry_join": [
                     "provider=aws tag_key=StackName tag_value=${AWS::StackName} region=${AWS::Region}"
                   ]
                 }
+              permissions: '0644'
+            - path: /etc/cron.d/da-monitoring
+              content: |
+                0 * * * * root /opt/consul-backup.sh
+              permissions: '0600'
+            - path: /opt/consul-backup.sh
+              content: |
+                BACKUP_DATE=$(date +%d-%m-%YZ%H-%M-%SZ)
+                /usr/local/bin/consul-backinator backup -prefix=/ -token=${ConsulToken} -file=/opt/consul-backinator/kv -acls=/opt/consul-backinator/acls
+                aws s3 cp /opt/consul-backinator/kv s3://${BackupStorageBucketName}/automatic/ec2_host/kv/$BACKUP_DATE/kv-backup
+                aws s3 cp /opt/consul-backinator/kv.sig s3://${BackupStorageBucketName}/automatic/ec2_host/kv/$BACKUP_DATE/kv-backup.sig
+                aws s3 cp /opt/consul-backinator/acls s3://${BackupStorageBucketName}/automatic/ec2_host/acls/$BACKUP_DATE/acls-backup
+                aws s3 cp /opt/consul-backinator/acls.sig s3://${BackupStorageBucketName}/automatic/ec2_host/acls/$BACKUP_DATE/acls-backup.sig
+              permissions: '0775'
             runcmd:
             - mkdir -p /opt/consul-data
             - curl -O https://releases.hashicorp.com/consul/${ConsulVersion}/consul_${ConsulVersion}_linux_amd64.zip
@@ -364,8 +399,14 @@ Resources:
             - rm -f consul_${ConsulVersion}_linux_amd64.zip
             - mv consul /usr/local/bin
             - chmod +x /usr/local/bin/consul
-            - ip=$(wget -T10 -t2 -qO - http://169.254.169.254/latest/meta-data/local-ipv4 || hostname -i) && sed -i "s/env_environment/${Environment}/; s/env_token/${ConsulToken}/; s/ec2_host/$ip/" /opt/consul-config.json
+            - ip=$(wget -T10 -t2 -qO - http://169.254.169.254/latest/meta-data/local-ipv4 || hostname -i) && sed -i "s/ec2_host/$ip/" /opt/consul-backup.sh
             - ip=$(wget -T10 -t2 -qO - http://169.254.169.254/latest/meta-data/local-ipv4 || hostname -i) && consul agent -config-file /opt/consul-config.json -node $ip -advertise $ip -server -bootstrap-expect 3 -ui
+            - mkdir -p /opt/consul-backinator
+            - wget https://github.com/myENA/consul-backinator/releases/download/v1.6.5/consul-backinator-1.6.5-amd64-linux.tar.gz
+            - tar -xzf consul-backinator-1.6.5-amd64-linux.tar.gz
+            - rm -f consul-backinator-1.6.5-amd64-linux.tar.gz
+            - mv consul-backinator-1.6.5-amd64-linux/consul-backinator-1.6.5 /usr/local/bin/consul-backinator
+            - chmod +x /usr/local/bin/consul-backinator
 
   CpuUtilizationTargetTracking:
     Type: AWS::AutoScaling::ScalingPolicy
