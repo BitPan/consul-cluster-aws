@@ -41,9 +41,9 @@ Metadata:
         default: The subnets in which the instances can run
       VpcId:
         default: The VPC to which the subnets belong
-      ConsulImage:
-        default: The docker image to run for consul
       ConsulVersion:
+        default: The consul version to install
+      ConsulToken:
         default: The consul admin token
       Environment:
         default: The environment for which the consul cluster will run
