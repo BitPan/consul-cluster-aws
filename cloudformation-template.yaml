@@ -388,7 +388,7 @@ Resources:
               permissions: '0600'
             - path: /opt/consul-backup.sh
               content: |
-                BACKUP_DATE=$(date +%d-%m-%YZ%H-%M-%SZ)
+                BACKUP_DATE=$(date +%d-%m-%Y)
                 /usr/local/bin/consul-backinator backup -prefix=/ -token=${ConsulToken} -file=/opt/consul-backinator/kv -acls=/opt/consul-backinator/acls
                 aws s3 cp /opt/consul-backinator/kv s3://${BackupStorageBucketName}/automatic/ec2_host/kv/$BACKUP_DATE/kv-backup
                 aws s3 cp /opt/consul-backinator/kv.sig s3://${BackupStorageBucketName}/automatic/ec2_host/kv/$BACKUP_DATE/kv-backup.sig
